@@ -8,6 +8,7 @@ import android.widget.ImageView
 import android.widget.TextView
 import androidx.recyclerview.widget.RecyclerView
 import com.bumptech.glide.Glide
+import com.example.newsApp.model.News
 
 class NewsListAdapter(private val listener: NewsItemClicked) :
 
@@ -22,8 +23,8 @@ class NewsListAdapter(private val listener: NewsItemClicked) :
     override fun onBindViewHolder(holder: NewsViewHolder, position: Int) {
         val currentItem = items[position]
         holder.titleView.text = currentItem.title
-        holder.author.text = currentItem.author
-        Glide.with(holder.itemView.context).load(currentItem.imageUrl).into(holder.image)
+        holder.author.text = currentItem.keywords
+        Glide.with(holder.itemView.context).load(currentItem.urlToImage).placeholder(R.drawable.ic_news).into(holder.image)
 
         holder.itemView.setOnClickListener {
             listener.onItemClicked(items[position])
@@ -35,7 +36,7 @@ class NewsListAdapter(private val listener: NewsItemClicked) :
     }
 
 
-    fun updateNews(updatedNews: ArrayList<News>) {
+    fun updateNews(updatedNews: List<News>) {
         items.clear()
         items.addAll(updatedNews)
         notifyDataSetChanged()
@@ -46,8 +47,11 @@ class NewsViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
     val titleView: TextView = itemView.findViewById(R.id.title)
     val image:ImageView = itemView.findViewById(R.id.image)
     val author:TextView = itemView.findViewById(R.id.author)
+    
+
 }
 
 interface NewsItemClicked {
     fun onItemClicked(item: News)
+
 }

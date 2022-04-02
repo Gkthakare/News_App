@@ -1,12 +1,19 @@
 package com.example.newsApp
 
+import android.net.Uri
 import android.os.Bundle
-import android.widget.Toast
+import android.view.View
+
 import androidx.appcompat.app.AppCompatActivity
+import androidx.browser.customtabs.CustomTabsIntent
+import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
-import com.android.volley.Request
-import com.android.volley.toolbox.JsonObjectRequest
+import com.example.newsApp.api.RetrofitInstance
 import com.example.newsApp.databinding.ActivityMainBinding
+import com.example.newsApp.model.News
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 class MainActivity : AppCompatActivity(), NewsItemClicked {
     private lateinit var mAdapter: NewsListAdapter
@@ -18,43 +25,29 @@ class MainActivity : AppCompatActivity(), NewsItemClicked {
 
         val rc = binding.recyclerView
         rc.layoutManager = LinearLayoutManager(this)
-        fetchData()
+        fetchDataRetrofit()
         mAdapter = NewsListAdapter(this)
         rc.adapter = mAdapter
     }
 
-    private fun fetchData() {
-        val url =
-                    "https://newsapi.org/v2/everything?q=tesla&from=2022-02-28&sortBy=publishedAt&apiKey=12b0cb6c831842bf924747df98723d1b"
-        val jsonObjectRequest = JsonObjectRequest(
-            Request.Method.GET,
-            url,
-            null,
-            {
-                val newsJsonArray = it.getJSONArray("articles")
-                val newsArray = ArrayList<News>()
-                for (i in 0 until newsJsonArray.length()) {
-                    val newsJsonObject = newsJsonArray.getJSONObject(i)
-                    val news = News(
-                        newsJsonObject.getString("title"),
-                        newsJsonObject.getString("author"),
-                        newsJsonObject.getString("url"),
-                        newsJsonObject.getString("urlToImage")
-
-                    )
-                    newsArray.add(news)
-                }
-                mAdapter.updateNews(newsArray)
-            },
-            {
-                Toast.makeText(this, it.message, Toast.LENGTH_SHORT).show()
+    private fun fetchDataRetrofit() {
+        val pBar = binding.progressBar
+        pBar.visibility = View.VISIBLE
+        lifecycleScope.launch(Dispatchers.IO) {
+            val news = RetrofitInstance.newsApi.getHeadline()
+            withContext(Dispatchers.Main) {
+                mAdapter.updateNews(news.articles)
             }
+            pBar.visibility = View.GONE
 
-        )
-        MySingleton.getInstance(this).addToRequestQueue(jsonObjectRequest)
+        }
     }
 
+
     override fun onItemClicked(item: News) {
+        val builder = CustomTabsIntent.Builder()
+        val customTabsIntent = builder.build()
+        customTabsIntent.launchUrl(this,Uri.parse(item.url))
 
     }
 }
